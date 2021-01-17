@@ -110,14 +110,28 @@ namespace WebSiteMonitoring
             MailAddress mailAddress = new MailAddress(_emailSettings.senderEmail);
 
             StringBuilder body = new StringBuilder();
-            body.AppendLine("Check website: https://www.ontario.ca/page/2021-ontario-immigrant-nominee-program-updates");
-            body.AppendLine("Updated at : " + updatedDate.ToLongDateString() + " " + updatedDate.ToLongTimeString());
-            body.AppendLine("Sent from " + Environment.MachineName);
 
             mailMessage.Subject = "Web Page Updated";
-            mailMessage.Body = body.ToString();
             mailMessage.From = mailAddress;
-            _emailSettings.receivers.ForEach(receiver => mailMessage.Bcc.Add(receiver));
+
+            if(_OldDate == default)
+            {
+                body.AppendLine("Service started at: " + DateTime.Now.ToLongDateString() + " " + DateTime.Now.ToLongTimeString());
+                body.AppendLine("Updated at : " + updatedDate.ToLongDateString() + " " + updatedDate.ToLongTimeString());
+                body.AppendLine("Sent from " + Environment.MachineName);
+
+                mailMessage.Body = body.ToString();
+                mailMessage.To.Add(_emailSettings.receivers.First());
+            }
+            else
+            {
+                body.AppendLine("Check website: https://www.ontario.ca/page/2021-ontario-immigrant-nominee-program-updates");
+                body.AppendLine("Updated at : " + updatedDate.ToLongDateString() + " " + updatedDate.ToLongTimeString());
+                body.AppendLine("Sent from " + Environment.MachineName);
+
+                mailMessage.Body = body.ToString();
+                _emailSettings.receivers.ForEach(receiver => mailMessage.Bcc.Add(receiver));
+            }
 
             client.Send(mailMessage);
         }
