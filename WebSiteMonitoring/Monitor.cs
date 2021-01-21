@@ -26,13 +26,23 @@ namespace WebSiteMonitoring
 
         private readonly EmailSettings _emailSettings;
 
-        private DateTime _OldDate = new DateTime();
+        private DateTime _OldOinpDate = new DateTime();
+
+        private DateTime _OldCICDate = new DateTime();
 
         public Monitor(ILogger<Monitor> logger, EmailSettings emailSettings)
         {
             _logger = logger;
             _emailSettings = emailSettings;
         }
+
+        public override async Task StartAsync(CancellationToken cancellationToken)
+        {
+            SendEmail(null);
+
+            await base.StartAsync(cancellationToken);
+        }
+
 
         protected override async Task ExecuteAsync(CancellationToken stoppingToken)
         {
@@ -41,23 +51,34 @@ namespace WebSiteMonitoring
 
                 _logger.LogInformation("Worker running at: {time}", DateTimeOffset.Now);
                 _logger.LogInformation("Updated started at: {time}", DateTimeOffset.Now);
-                DateTime updatedDate = GetUpdated();
+                WebsiteCheck websiteCheck = new WebsiteCheck(_logger, "https://api.ontario.ca/api/drupal/page%2F2021-ontario-immigrant-nominee-program-updates");
                 _logger.LogInformation("Updated ended at: {time}", DateTimeOffset.Now);
-                if (updatedDate != default)
+                if ((_OldOinpDate != default) && (websiteCheck.UpdatedDate.CompareTo(_OldOinpDate) != 0))
                 {
-                    if (updatedDate.CompareTo(_OldDate) != 0)
-                    {
-                        _logger.LogWarning("Page Updated : {time}", updatedDate.ToString());
-                        SendEmail(updatedDate);
-                        _OldDate = updatedDate;
-                    }
+                    _logger.LogWarning("Page Updated : {time}", websiteCheck.updateTimeString);
+                    SendEmail(websiteCheck);
+                    _OldOinpDate = websiteCheck.UpdatedDate;
                 }
+
+
+                websiteCheck = new WebsiteCheck(_logger, "https://www.canada.ca/en/immigration-refugees-citizenship/services/immigrate-canada/express-entry/submit-profile/rounds-invitations.html");
+
+                if ((_OldCICDate != default) && (websiteCheck.UpdatedDate.CompareTo(_OldCICDate) != 0))
+                {
+                    _logger.LogWarning("Page Updated : {time}", websiteCheck.updateTimeString);
+                    SendEmail(websiteCheck);
+                    _OldCICDate = websiteCheck.UpdatedDate;
+                }
+
+
+
+
                 TimeSpan Delay = new TimeSpan(0, 0, 30);
                 await Task.Delay(delay: Delay, stoppingToken);
             }
         }
 
-
+        /*
         private DateTime GetUpdated()
         {
             string requestUrl = "https://api.ontario.ca/api/drupal/page%2F2021-ontario-immigrant-nominee-program-updates";
@@ -97,8 +118,9 @@ namespace WebSiteMonitoring
 
             return updatedDate;
         }
+        */
 
-        private void SendEmail(DateTime updatedDate)
+        private void SendEmail(WebsiteCheck websiteCheck)
         {
             SmtpClient client = new SmtpClient("smtp.gmail.com", 587)
             {
@@ -114,10 +136,9 @@ namespace WebSiteMonitoring
             mailMessage.Subject = "Web Page Updated";
             mailMessage.From = mailAddress;
 
-            if(_OldDate == default)
+            if (websiteCheck == null)
             {
                 body.AppendLine("Service started at: " + DateTime.Now.ToLongDateString() + " " + DateTime.Now.ToLongTimeString());
-                body.AppendLine("Updated at : " + updatedDate.ToLongDateString() + " " + updatedDate.ToLongTimeString());
                 body.AppendLine("Sent from " + Environment.MachineName);
 
                 mailMessage.Body = body.ToString();
@@ -125,8 +146,8 @@ namespace WebSiteMonitoring
             }
             else
             {
-                body.AppendLine("Check website: https://www.ontario.ca/page/2021-ontario-immigrant-nominee-program-updates");
-                body.AppendLine("Updated at : " + updatedDate.ToLongDateString() + " " + updatedDate.ToLongTimeString());
+                body.AppendLine(websiteCheck.EmailBody);
+                body.AppendLine("Updated at : " + websiteCheck.updateTimeString);
                 body.AppendLine("Sent from " + Environment.MachineName);
 
                 mailMessage.Body = body.ToString();
