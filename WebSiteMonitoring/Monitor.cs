@@ -70,9 +70,6 @@ namespace WebSiteMonitoring
                     _OldCICDate = websiteCheck.UpdatedDate;
                 }
 
-
-
-
                 TimeSpan Delay = new TimeSpan(0, 0, 30);
                 await Task.Delay(delay: Delay, stoppingToken);
             }
@@ -139,7 +136,13 @@ namespace WebSiteMonitoring
             if (websiteCheck == null)
             {
                 body.AppendLine("Service started at: " + DateTime.Now.ToLongDateString() + " " + DateTime.Now.ToLongTimeString());
-                body.AppendLine("Sent from " + Environment.MachineName);
+                body.AppendLine();
+                body.AppendLine("Rceipents are: ");
+                body.AppendJoin(Environment.NewLine, _emailSettings.receivers
+                    .Select((receiver, index) => "\t" + (index + 1).ToString() + ". " + receiver));
+
+                body.AppendLine();
+                body.AppendLine(Environment.NewLine + "Sent from " + Environment.MachineName);
 
                 mailMessage.Body = body.ToString();
                 mailMessage.To.Add(_emailSettings.receivers.First());
