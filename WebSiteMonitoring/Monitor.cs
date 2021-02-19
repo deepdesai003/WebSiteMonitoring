@@ -57,9 +57,8 @@ namespace WebSiteMonitoring
                 {
                     _logger.LogWarning("Page Updated : {time}", websiteCheck.updateTimeString);
                     SendEmail(websiteCheck);
-                    _OldOinpDate = websiteCheck.UpdatedDate;
                 }
-
+                _OldOinpDate = websiteCheck.UpdatedDate;
 
                 websiteCheck = new WebsiteCheck(_logger, "https://www.canada.ca/en/immigration-refugees-citizenship/services/immigrate-canada/express-entry/submit-profile/rounds-invitations.html");
 
@@ -67,10 +66,11 @@ namespace WebSiteMonitoring
                 {
                     _logger.LogWarning("Page Updated : {time}", websiteCheck.updateTimeString);
                     SendEmail(websiteCheck);
-                    _OldCICDate = websiteCheck.UpdatedDate;
                 }
 
-                TimeSpan Delay = new TimeSpan(0, 0, 30);
+                _OldCICDate = websiteCheck.UpdatedDate;
+
+                TimeSpan Delay = new TimeSpan(0, 0, 1);
                 await Task.Delay(delay: Delay, stoppingToken);
             }
         }
