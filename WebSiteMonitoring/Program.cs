@@ -23,6 +23,7 @@ namespace WebSiteMonitoring
         public static IHostBuilder CreateHostBuilder(string[] args) =>
             Host.CreateDefaultBuilder(args)
             .UseWindowsService()
+            .UseSystemd()
             .ConfigureServices((hostContext, services) =>
             {
                 IConfiguration configuration = hostContext.Configuration;
@@ -32,12 +33,9 @@ namespace WebSiteMonitoring
                 services.AddSingleton(emailSettings);
                 services.AddHostedService<Monitor>();
             })
-            .ConfigureLogging((context, logging) =>
+            .ConfigureLogging((hostingContext, logging) =>
             {
-                logging.AddEventLog(new EventLogSettings()
-                {
-                    SourceName = "Oinp Monitor Service"
-                });
+                logging.AddFile("Logs/OinpWebMonitor-{Date}.txt");
             });
     }
 }

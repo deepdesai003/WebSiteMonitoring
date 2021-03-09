@@ -6,8 +6,6 @@ using Google.Apis.Util.Store;
 using Google.Apis.Vision.v1;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
-using Newtonsoft.Json;
-using Newtonsoft.Json.Linq;
 using System;
 using System.Collections.Generic;
 using System.IO;
@@ -70,7 +68,7 @@ namespace WebSiteMonitoring
 
                 _OldCICDate = websiteCheck.UpdatedDate;
 
-                TimeSpan Delay = new TimeSpan(0, 0, 1);
+                TimeSpan Delay = new TimeSpan(0, 0, 30);
                 await Task.Delay(delay: Delay, stoppingToken);
             }
         }

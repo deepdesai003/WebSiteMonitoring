@@ -68,6 +68,10 @@ namespace WebSiteMonitoring
                     jObject = (JObject)JsonConvert.DeserializeObject<object>(response);
                     var dateValue = jObject?.SelectTokens("$..og:updated_time.#attached.drupal_add_html_head..#value").FirstOrDefault();
                     updatedDate = dateValue.ToObject<DateTime>();
+
+                    //If using system.text.json
+                    //jObject.GetProperty("metatags").GetProperty("og:updated_time").GetProperty("#attached").GetProperty("drupal_add_html_head")[0][0].GetProperty("#value")
+
                     EmailBody = "Check website: https://www.ontario.ca/page/2021-ontario-immigrant-nominee-program-updates";
                 }
                 else
