@@ -91,7 +91,7 @@ namespace WebSiteMonitoring
             finally
             {
                 httpWebResponse.Close();
-                readStream.Close();
+                readStream?.Close();
             }
 
             return updatedDate;

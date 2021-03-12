@@ -46,30 +46,37 @@ namespace WebSiteMonitoring
         {
             while (!stoppingToken.IsCancellationRequested)
             {
-
-                _logger.LogInformation("Worker running at: {time}", DateTimeOffset.Now);
-                _logger.LogInformation("Updated started at: {time}", DateTimeOffset.Now);
-                WebsiteCheck websiteCheck = new WebsiteCheck(_logger, "https://api.ontario.ca/api/drupal/page%2F2021-ontario-immigrant-nominee-program-updates");
-                _logger.LogInformation("Updated ended at: {time}", DateTimeOffset.Now);
-                if ((_OldOinpDate != default) && (websiteCheck.UpdatedDate.CompareTo(_OldOinpDate) != 0))
+                try
                 {
-                    _logger.LogWarning("Page Updated : {time}", websiteCheck.updateTimeString);
-                    SendEmail(websiteCheck);
+
+                    _logger.LogInformation("Worker running at: {time}", DateTimeOffset.Now);
+                    _logger.LogInformation("Updated started at: {time}", DateTimeOffset.Now);
+                    WebsiteCheck websiteCheck = new WebsiteCheck(_logger, "https://api.ontario.ca/api/drupal/page%2F2021-ontario-immigrant-nominee-program-updates");
+                    _logger.LogInformation("Updated ended at: {time}", DateTimeOffset.Now);
+                    if ((_OldOinpDate != default) && (websiteCheck.UpdatedDate.CompareTo(_OldOinpDate) != 0))
+                    {
+                        _logger.LogWarning("Page Updated : {time}", websiteCheck.updateTimeString);
+                        SendEmail(websiteCheck);
+                    }
+                    _OldOinpDate = websiteCheck.UpdatedDate;
+
+                    websiteCheck = new WebsiteCheck(_logger, "https://www.canada.ca/en/immigration-refugees-citizenship/services/immigrate-canada/express-entry/submit-profile/rounds-invitations.html");
+
+                    if ((_OldCICDate != default) && (websiteCheck.UpdatedDate.CompareTo(_OldCICDate) != 0))
+                    {
+                        _logger.LogWarning("Page Updated : {time}", websiteCheck.updateTimeString);
+                        SendEmail(websiteCheck);
+                    }
+
+                    _OldCICDate = websiteCheck.UpdatedDate;
+
+                    TimeSpan Delay = new TimeSpan(0, 0, 30);
+                    await Task.Delay(delay: Delay, stoppingToken);
                 }
-                _OldOinpDate = websiteCheck.UpdatedDate;
-
-                websiteCheck = new WebsiteCheck(_logger, "https://www.canada.ca/en/immigration-refugees-citizenship/services/immigrate-canada/express-entry/submit-profile/rounds-invitations.html");
-
-                if ((_OldCICDate != default) && (websiteCheck.UpdatedDate.CompareTo(_OldCICDate) != 0))
+                catch(Exception ex)
                 {
-                    _logger.LogWarning("Page Updated : {time}", websiteCheck.updateTimeString);
-                    SendEmail(websiteCheck);
+                    _logger.LogError("Error Service:" + ex.Message);
                 }
-
-                _OldCICDate = websiteCheck.UpdatedDate;
-
-                TimeSpan Delay = new TimeSpan(0, 0, 30);
-                await Task.Delay(delay: Delay, stoppingToken);
             }
         }
 
