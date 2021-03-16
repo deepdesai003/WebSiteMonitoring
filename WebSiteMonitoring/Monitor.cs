@@ -1,9 +1,3 @@
-using Google.Apis.Auth.OAuth2;
-using Google.Apis.Gmail.v1;
-using Google.Apis.Gmail.v1.Data;
-using Google.Apis.Services;
-using Google.Apis.Util.Store;
-using Google.Apis.Vision.v1;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
 using System;
@@ -124,6 +118,11 @@ namespace WebSiteMonitoring
 
         private void SendEmail(WebsiteCheck websiteCheck)
         {
+            if(websiteCheck == null || websiteCheck.UpdatedDate.Equals(default))
+            {
+                return;
+            }
+
             SmtpClient client = new SmtpClient("smtp.gmail.com", 587)
             {
                 Credentials = new NetworkCredential(_emailSettings.senderEmail, _emailSettings.senderPassword),
@@ -163,97 +162,6 @@ namespace WebSiteMonitoring
             }
 
             client.Send(mailMessage);
-        }
-
-        private void SendEmailWithGmailAPI()
-        {
-            string[] Scopes = { GmailService.Scope.GmailSend };
-            string ApplicationName = "Web Monitor .NET";
-            string serviceAccountEmail = "web-monitor-api-net@email-client-301419.iam.gserviceaccount.com";
-            UserCredential credential;
-            try
-            {
-
-                using (var stream =
-                    new FileStream("./credentials.json", FileMode.Open, FileAccess.Read))
-                {
-                    // The file token.json stores the user's access and refresh tokens, and is created
-                    // automatically when the authorization flow completes for the first time.
-                    string credPath = "token.json";
-                    credential = GoogleWebAuthorizationBroker.AuthorizeAsync(
-                        GoogleClientSecrets.Load(stream).Secrets,
-                        Scopes,
-                        "user",
-                        CancellationToken.None,
-                        new FileDataStore(credPath, true))
-                        .Result;
-                    Console.WriteLine("Credential file saved to: " + credPath);
-                }
-
-
-                // Create Gmail API service.
-                var service = new GmailService(new BaseClientService.Initializer()
-                {
-                    HttpClientInitializer = credential,
-                    ApplicationName = ApplicationName,
-                });
-
-                /*
-                var gservice = new VisionService(new BaseClientService.Initializer()
-                {
-                    HttpClientInitializer = gcredential,
-                    ApplicationName = ApplicationName,
-                });
-                */
-                Message emailContent = CreateMessage();
-                service.Users.Messages.Send(emailContent, "me").Execute();
-                _logger.LogInformation("Email Sent");
-
-            }
-            catch (Exception ex)
-            {
-                _logger.LogError("Error as GMAIL API :" + ex.Message);
-            }
-        }
-
-        private static string Base64UrlEncode(string text)
-        {
-            byte[] bytes = System.Text.Encoding.UTF8.GetBytes(text);
-
-            return System.Convert.ToBase64String(bytes)
-                .Replace('+', '-')
-                .Replace('/', '_')
-                .Replace("=", "");
-        }
-
-        private Message CreateMessage()
-        {
-            Message message = new Message();
-            try
-            {
-                Encoding.RegisterProvider(CodePagesEncodingProvider.Instance);
-                AE.Net.Mail.MailMessage mailMessage = new AE.Net.Mail.MailMessage
-                {
-                    Subject = "Web Page Updated",
-                    Body = "Check website: https://www.ontario.ca/page/2021-ontario-immigrant-nominee-program-updates",
-                    From = new MailAddress("deepdesai003@gmail.com"),
-                };
-
-                mailMessage.To.Add(new MailAddress("deepdesai003@gmail.com"));
-                mailMessage.ReplyTo.Add(mailMessage.From); // Bounces without this!!
-                StringWriter msgStr = new StringWriter();
-                msgStr.Write(mailMessage);
-                mailMessage.Save(msgStr);
-                // Special "url-safe" base64 encode.
-                var raw = Base64UrlEncode(msgStr.ToString());
-                message = new Message { Raw = raw };
-            }
-            catch (Exception ex)
-            {
-                _logger.LogError(ex.Message);
-            }
-
-            return message;
         }
 
     }

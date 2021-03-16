@@ -7,10 +7,6 @@
     <Platforms>AnyCPU;x64</Platforms>
   </PropertyGroup>
   <ItemGroup>
-    <PackageReference Include="AE.Net.Mail" Version="1.7.10" />
-    <PackageReference Include="Google.Apis.Gmail.v1" Version="1.49.0.2191" />
-    <PackageReference Include="Google.Apis.Oauth2.v2" Version="1.49.0.1869" />
-    <PackageReference Include="Google.Apis.Vision.v1" Version="1.49.0.2167" />
     <PackageReference Include="Microsoft.Extensions.Hosting" Version="5.0.0" />
     <PackageReference Include="Microsoft.Extensions.Hosting.Systemd" Version="5.0.1" />
     <PackageReference Include="Microsoft.Extensions.Hosting.WindowsServices" Version="5.0.1" />
