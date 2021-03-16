@@ -85,7 +85,7 @@ namespace WebSiteMonitoring
             }
             catch (Exception ex)
             {
-                _logger.LogError("Error API Call:" + ex.Message);
+                _logger.LogError("Error API Call:" + ex);
             }
             finally
             {
