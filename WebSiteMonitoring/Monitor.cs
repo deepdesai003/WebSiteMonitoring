@@ -69,7 +69,7 @@ namespace WebSiteMonitoring
                 }
                 catch(Exception ex)
                 {
-                    _logger.LogError("Error Service:" + ex.Message);
+                    _logger.LogError("Error Service:" + ex);
                 }
             }
         }
