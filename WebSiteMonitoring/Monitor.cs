@@ -1,5 +1,7 @@
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
+using SendGrid;
+using SendGrid.Helpers.Mail;
 using System;
 using System.Collections.Generic;
 using System.IO;
@@ -30,7 +32,7 @@ namespace WebSiteMonitoring
 
         public override async Task StartAsync(CancellationToken cancellationToken)
         {
-            SendEmail(null);
+            await SendEmail(null);
 
             await base.StartAsync(cancellationToken);
         }
@@ -116,26 +118,23 @@ namespace WebSiteMonitoring
         }
         */
 
-        private void SendEmail(WebsiteCheck websiteCheck)
+        private async Task SendEmailWithSendGridAsync(WebsiteCheck websiteCheck)
         {
-            if(websiteCheck == null || websiteCheck.UpdatedDate.Equals(default))
-            {
-                return;
-            }
+            string apiKey = _emailSettings.SendGrid;
+            var client = new SendGridClient(apiKey);
+            var from = new EmailAddress(_emailSettings.senderEmail, "Updates");
+            var subject = "Web Page Updated";
+            var to = new EmailAddress(_emailSettings.senderEmail, "Reciever");
+            var plainTextContent = GetEmailBody(websiteCheck);
+            var htmlContent = "<strong>and easy to do anywhere, even with C#</strong>";
+            var msg = MailHelper.CreateSingleEmail(from, to, subject, plainTextContent, htmlContent);
+            var response = await client.SendEmailAsync(msg);
 
-            SmtpClient client = new SmtpClient("smtp.gmail.com", 587)
-            {
-                Credentials = new NetworkCredential(_emailSettings.senderEmail, _emailSettings.senderPassword),
-                EnableSsl = true
-            };
+        }
 
-            MailMessage mailMessage = new MailMessage();
-            MailAddress mailAddress = new MailAddress(_emailSettings.senderEmail);
-
+        private string GetEmailBody(WebsiteCheck websiteCheck)
+        {
             StringBuilder body = new StringBuilder();
-
-            mailMessage.Subject = "Web Page Updated";
-            mailMessage.From = mailAddress;
 
             if (websiteCheck == null)
             {
@@ -147,17 +146,45 @@ namespace WebSiteMonitoring
 
                 body.AppendLine();
                 body.AppendLine(Environment.NewLine + "Sent from " + Environment.MachineName);
-
-                mailMessage.Body = body.ToString();
-                mailMessage.To.Add(_emailSettings.receivers.First());
             }
             else
             {
                 body.AppendLine(websiteCheck.EmailBody);
                 body.AppendLine("Updated at : " + websiteCheck.updateTimeString);
                 body.AppendLine("Sent from " + Environment.MachineName);
+            }
+            return body.ToString();
+        }
 
-                mailMessage.Body = body.ToString();
+        private void SendEmail(WebsiteCheck websiteCheck)
+        {
+            //if(websiteCheck == null || websiteCheck.UpdatedDate.Equals(default))
+            //{
+            //    return;
+            //}
+
+            SmtpClient client = new SmtpClient("smtp.gmail.com", 587)
+            {
+                Credentials = new NetworkCredential(_emailSettings.senderEmail, _emailSettings.senderPassword),
+                EnableSsl = true
+            };
+
+            MailMessage mailMessage = new MailMessage();
+            MailAddress mailAddress = new MailAddress(_emailSettings.senderEmail);
+
+            //StringBuilder body = new StringBuilder();
+
+            mailMessage.Subject = "Web Page Updated";
+            mailMessage.From = mailAddress;
+
+            if (websiteCheck == null || websiteCheck.UpdatedDate.Equals(default))
+            {
+                mailMessage.Body = GetEmailBody(websiteCheck);
+                mailMessage.To.Add(_emailSettings.receivers.First());
+            }
+            else
+            {
+                mailMessage.Body = GetEmailBody(websiteCheck);
                 _emailSettings.receivers.ForEach(receiver => mailMessage.Bcc.Add(receiver));
             }
 

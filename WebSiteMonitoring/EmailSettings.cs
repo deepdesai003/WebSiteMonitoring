@@ -7,10 +7,9 @@ namespace WebSiteMonitoring
     public class EmailSettings
     {
         public string senderEmail { get; set; } = null;
-
         public string senderPassword { get; set; } = null;
-
         public List<string> receivers { get; set; } = null;
+        public string SendGrid { get; set; } = null;
 
     }
 }
